@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription directe - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .form-card{background:white;border-radius:20px;padding:30px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+        .page-title{margin-bottom:30px;border-left:5px solid #28a745;padding-left:20px;}
+        .btn-submit{background:linear-gradient(135deg,#28a745,#20c997);border:none;border-radius:10px;padding:12px;width:100%;color:white;font-weight:600;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="max-width:900px;padding:30px 20px;">
+    <div class="page-title"><h1>Inscription directe d'un employé</h1><p>Inscrivez directement un employé à une session</p></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="form-card">
+        <div class="alert alert-info mb-4"><i class="fas fa-info-circle me-2"></i>Sélectionnez un employé, puis une formation, puis la session souhaitée.</div>
+        <form action="/responsable/inscription" method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Employé *</label>
+                    <select class="form-select" name="employeId" id="employeSelect" required>
+                        <option value="">Sélectionnez un employé</option>
+                        <option th:each="emp : ${employes}"
+                                th:value="${emp.id}"
+                                th:selected="${emp.id == employeIdSelectionne}"
+                                th:text="${emp.prenom} + ' ' + ${emp.nom} + ' — ' + ${emp.poste} + ' (' + ${emp.departement} + ')'">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Formation *</label>
+                    <select class="form-select" name="formationId" id="formationSelect" required onchange="chargerSessions()">
+                        <option value="">Sélectionnez une formation</option>
+                        <option th:each="f : ${formations}" th:value="${f.id}" th:text="${f.nomFormation} + ' (' + ${f.dureeHeures} + 'h)'"></option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">Session *</label>
+                    <select class="form-select" name="sessionId" id="sessionSelect" required>
+                        <option value="">Sélectionnez d'abord une formation</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">Commentaire (optionnel)</label>
+                    <textarea class="form-control" name="appreciation" rows="3" placeholder="Note pour l'employé..."></textarea>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn-submit"><i class="fas fa-user-plus me-2"></i>Inscrire l'employé</button>
+                <a href="/responsable/dashboard" class="btn btn-secondary w-100 mt-2"><i class="fas fa-times me-2"></i>Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+async function chargerSessions() {
+    const formationId = document.getElementById('formationSelect').value;
+    const sel = document.getElementById('sessionSelect');
+    if (!formationId) { sel.innerHTML = '<option value="">Sélectionnez d\'abord une formation</option>'; return; }
+    sel.innerHTML = '<option value="">Chargement...</option>';
+    try {
+        const r = await fetch('/responsable/sessions-par-formation?formationId=' + formationId);
+        const sessions = await r.json();
+        sel.innerHTML = '<option value="">Sélectionnez une session</option>';
+        if (sessions.length === 0) sel.innerHTML += '<option disabled>Aucune session disponible</option>';
+        sessions.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.id;
+            o.textContent = 'Du ' + s.dateDebut + ' au ' + s.dateFin + ' — ' + s.lieu + ' (' + s.placesDisponibles + ' places)';
+            sel.appendChild(o);
+        });
+    } catch(e) { sel.innerHTML = '<option>Erreur de chargement</option>'; }
+}
+</script>
+</body>
+</html>

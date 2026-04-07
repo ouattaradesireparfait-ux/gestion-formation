@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - Espace Employé</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#667eea,#764ba2);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .stat-card{background:white;border-radius:20px;padding:25px;box-shadow:0 5px 20px rgba(0,0,0,.05);border:1px solid #e0e4f0;transition:all .3s;}
+        .stat-card:hover{transform:translateY(-5px);border-color:#667eea;}
+        .stat-icon{width:60px;height:60px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:15px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+        .stat-icon i{font-size:1.8em;color:white;}
+        .stat-info h3{font-size:2em;color:#333;margin-bottom:5px;}
+        .action-card{background:white;border-radius:15px;padding:20px;text-align:center;text-decoration:none;display:block;transition:all .3s;border:1px solid #e0e4f0;}
+        .action-card:hover{transform:translateY(-5px);border-color:#667eea;box-shadow:0 10px 25px rgba(102,126,234,.2);}
+        .action-card i{font-size:2.5em;color:#667eea;margin-bottom:15px;}
+        .action-card h4{color:#333;} .action-card p{color:#666;font-size:.9em;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+        .page-title{margin-bottom:30px;border-left:5px solid #667eea;padding-left:20px;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active" href="/employe/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/employe/demandes">Mes demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/employe/catalogue">Catalogue</a></li>
+                <li class="nav-item"><a class="nav-link" href="/employe/mes-inscriptions">Mes inscriptions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Employé</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="padding:30px 20px;">
+    <div class="page-title">
+        <h1>Bonjour, <span th:text="${username}">Employé</span> !</h1>
+        <p>Bienvenue dans votre espace de gestion de formation</p>
+    </div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+                <div class="stat-info"><h3 th:text="${nbDemandes}">0</h3><p class="text-muted">Demandes en cours</p></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info"><h3 th:text="${nbFormationsSuivies}">0</h3><p class="text-muted">Formations suivies</p></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-info"><h3 th:text="${nbEnAttente}">0</h3><p class="text-muted">En attente de validation</p></div>
+            </div>
+        </div>
+    </div>
+    <div th:if="${!peutDemander}" class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>Vous avez atteint la limite de 3 formations par an.
+    </div>
+    <h3 class="mb-3">Actions rapides</h3>
+    <div class="row g-3">
+        <div class="col-md-3"><a href="/employe/nouvelle-demande" class="action-card"><i class="fas fa-plus-circle"></i><h4>Nouvelle demande</h4><p>Faire une demande de formation</p></a></div>
+        <div class="col-md-3"><a href="/employe/catalogue" class="action-card"><i class="fas fa-book"></i><h4>Catalogue</h4><p>Consulter les formations</p></a></div>
+        <div class="col-md-3"><a href="/employe/demandes" class="action-card"><i class="fas fa-list-alt"></i><h4>Mes demandes</h4><p>Suivre mes demandes</p></a></div>
+        <div class="col-md-3"><a href="/employe/mes-inscriptions" class="action-card"><i class="fas fa-calendar-check"></i><h4>Mes inscriptions</h4><p>Gérer mes inscriptions</p></a></div>
+        <div class="col-md-3"><a href="/employe/transmettre-document" class="action-card"><i class="fas fa-upload"></i><h4>Transmettre doc.</h4><p>Document fin de formation</p></a></div>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/
+*.classpath
+*.project
+*.settings/
+
+# Base de données H2 locale (ne pas committer)
+data/
+
+# Fichiers uploadés localement (ne pas committer)
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

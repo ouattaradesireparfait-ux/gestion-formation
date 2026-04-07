@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instruire une demande - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .card{border:none;border-radius:20px;box-shadow:0 5px 20px rgba(0,0,0,.05);margin-bottom:20px;}
+        .card-header{background:white;border-bottom:1px solid #e0e4f0;padding:15px 20px;font-weight:600;border-radius:20px 20px 0 0!important;}
+        .info-row{display:flex;padding:10px 0;border-bottom:1px solid #f5f5f5;}
+        .info-label{width:160px;font-weight:600;color:#666;}
+        .info-value{flex:1;}
+        .motivation-box{background:#f8f9ff;padding:15px;border-radius:10px;border-left:4px solid #28a745;margin:10px 0;}
+        .page-title{margin-bottom:30px;border-left:5px solid #28a745;padding-left:20px;}
+        .info-banner{background:#e8f4fd;border:1px solid #b8daff;border-radius:10px;padding:15px;margin-bottom:20px;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="max-width:900px;padding:30px 20px;">
+    <div class="page-title"><h1>Instruction de la demande</h1><p>Étudiez la demande et prenez une décision</p></div>
+
+    <!-- Info : c'est l'employé qui choisit la session -->
+    <div class="info-banner">
+        <i class="fas fa-info-circle text-primary me-2"></i>
+        <strong>Note :</strong> Si vous acceptez, l'employé sera notifié et pourra choisir lui-même sa session de formation parmi les sessions disponibles.
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="fas fa-file-alt me-2"></i>Détail de la demande</div>
+        <div class="card-body">
+            <div class="info-row"><div class="info-label">N° Demande</div><div class="info-value" th:text="${demande.numeroDemande}">-</div></div>
+            <div class="info-row"><div class="info-label">Date</div><div class="info-value" th:text="${#temporals.format(demande.dateDemande,'dd/MM/yyyy')}">-</div></div>
+            <div class="info-row"><div class="info-label">Employé</div><div class="info-value" th:text="${demande.employe.prenom} + ' ' + ${demande.employe.nom} + ' — ' + ${demande.employe.poste}">-</div></div>
+            <div class="info-row"><div class="info-label">Département</div><div class="info-value" th:text="${demande.employe.departement}">-</div></div>
+            <div class="info-row"><div class="info-label">Formations suivies</div>
+                <div class="info-value">
+                    <span th:text="${demande.employe.nombreFormationsSuivies} + '/3'">0/3</span>
+                    <span th:if="${demande.employe.nombreFormationsSuivies >= 3}" class="badge bg-danger ms-2">Limite atteinte</span>
+                </div>
+            </div>
+            <div class="info-row"><div class="info-label">Formation</div><div class="info-value" th:text="${demande.formation.nomFormation} + ' (' + ${demande.formation.dureeHeures} + 'h)'">-</div></div>
+            <div class="motivation-box">
+                <strong>Motivation de l'employé :</strong>
+                <p class="mb-0 mt-1" th:text="${demande.motivation}">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="fas fa-gavel me-2"></i>Votre décision</div>
+
+        <label class="form-label fw-bold mt-3">
+        Montant de la formation (FCFA)
+        <small class="text-muted fw-normal">— sera indiqué sur la facture de l'employé</small>
+    </label>
+    <input type="number" class="form-control mb-4" id="montantFacture"
+           placeholder="ex: 150000" min="0" step="500">
+
+        <div class="card-body">
+            <label class="form-label fw-bold">Commentaire à l'employé</label>
+            <textarea class="form-control mb-4" id="commentaire" rows="4"
+                      placeholder="Motivez votre décision... (obligatoire pour un refus)"></textarea>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <!-- Accepter : pas de choix de session ici -->
+                <form id="formAccepter" th:action="@{/responsable/accepter}" method="post" style="display:inline;">
+                    <input type="hidden" name="demandeId" th:value="${demande.id}">
+                    <input type="hidden" name="commentaire" id="commentaireAccepter">
+                    <input type="hidden" name="montantFacture" id="montantFactureHidden">
+                    <button type="button" class="btn btn-success btn-lg px-4" onclick="soumettrAccepter()">
+                        <i class="fas fa-check me-2"></i>Accepter
+                    </button>
+                </form>
+                <form id="formRefuser" th:action="@{/responsable/refuser}" method="post" style="display:inline;">
+                    <input type="hidden" name="demandeId" th:value="${demande.id}">
+                    <input type="hidden" name="commentaire" id="commentaireRefuser">
+                    <button type="button" class="btn btn-danger btn-lg px-4" onclick="soumettrRefuser()">
+                        <i class="fas fa-times me-2"></i>Refuser
+                    </button>
+                </form>
+                <a href="/responsable/demandes" class="btn btn-secondary btn-lg px-4">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function soumettrAccepter() {
+    const commentaire = document.getElementById('commentaire').value;
+    const montant = document.getElementById('montantFacture').value;
+    document.getElementById('commentaireAccepter').value = commentaire;
+    document.getElementById('montantFactureHidden').value = montant;
+    document.getElementById('formAccepter').submit();
+}
+function soumettrRefuser() {
+    const commentaire = document.getElementById('commentaire').value;
+    if (!commentaire.trim()) { alert("Veuillez indiquer un motif de refus."); return; }
+    document.getElementById('commentaireRefuser').value = commentaire;
+    document.getElementById('formRefuser').submit();
+}
+</script>
+</body>
+</html>

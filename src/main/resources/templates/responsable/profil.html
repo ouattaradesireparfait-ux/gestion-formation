@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon profil - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .card{border:none;border-radius:20px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link active" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="max-width:800px;padding:30px 20px;">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="card">
+        <div class="card-header bg-white border-bottom p-4" style="border-radius:20px 20px 0 0!important;">
+            <h4><i class="fas fa-user-circle me-2"></i>Mon profil</h4>
+        </div>
+        <div class="card-body p-4">
+            <div class="row mb-3">
+                <div class="col-md-6"><label class="text-muted small">Nom</label><p class="fw-bold" th:text="${utilisateur.nom}">-</p></div>
+                <div class="col-md-6"><label class="text-muted small">Prénom</label><p class="fw-bold" th:text="${utilisateur.prenom}">-</p></div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6"><label class="text-muted small">Email</label><p class="fw-bold" th:text="${utilisateur.email}">-</p></div>
+                <div class="col-md-6"><label class="text-muted small">Téléphone</label><p class="fw-bold" th:text="${utilisateur.telephone ?: 'Non renseigné'}">-</p></div>
+            </div>
+            <hr>
+            <h5 class="mb-3"><i class="fas fa-key me-2"></i>Changer mon mot de passe</h5>
+            <form th:action="@{/changer-mot-de-passe}" method="post" th:object="${passwordRequest}">
+                <div class="mb-3"><label class="form-label">Ancien mot de passe</label><input type="password" class="form-control" th:field="*{ancienMotDePasse}" required></div>
+                <div class="mb-3"><label class="form-label">Nouveau mot de passe</label><input type="password" class="form-control" th:field="*{nouveauMotDePasse}" required></div>
+                <div class="mb-3"><label class="form-label">Confirmer</label><input type="password" class="form-control" th:field="*{confirmationMotDePasse}" required></div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Changer le mot de passe</button>
+            </form>
+        </div>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

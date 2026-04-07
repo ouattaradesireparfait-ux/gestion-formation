@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des factures - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .card{border:none;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+        .card-header{background:white;border-bottom:1px solid #e0e4f0;padding:15px 20px;font-weight:600;border-radius:15px 15px 0 0!important;}
+        .page-title{margin-bottom:30px;border-left:5px solid #28a745;padding-left:20px;}
+        .stat-card{background:white;border-radius:20px;padding:25px;box-shadow:0 5px 20px rgba(0,0,0,.05);border:1px solid #e0e4f0;}
+        .stat-icon{width:55px;height:55px;border-radius:15px;display:flex;align-items:center;justify-content:center;margin-bottom:15px;}
+        .stat-icon i{font-size:1.5em;color:white;}
+        .badge-payee{background:#d1fae5;color:#065f46;padding:5px 12px;border-radius:20px;font-size:.85em;font-weight:600;}
+        .badge-nonpayee{background:#fee2e2;color:#991b1b;padding:5px 12px;border-radius:20px;font-size:.85em;font-weight:600;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link active" href="/responsable/factures">Factures</a></li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container" style="padding:30px 20px;">
+    <div class="page-title">
+        <h1><i class="fas fa-file-invoice-dollar me-2 text-success"></i>Gestion des factures</h1>
+        <p>Factures générées automatiquement à chaque inscription confirmée</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle me-2"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg,#28a745,#20c997);">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <h3 th:text="${#lists.size(factures)}">0</h3>
+                <p class="text-muted mb-0">Total factures</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg,#dc3545,#ff6b6b);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 th:text="${#numbers.formatDecimal(totalNonPayees,0,'COMMA',0,'POINT')} + ' FCFA'">0</h3>
+                <p class="text-muted mb-0">Montant en attente</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:linear-gradient(135deg,#0d6efd,#6ea8fe);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 th:text="${#numbers.formatDecimal(totalPayees,0,'COMMA',0,'POINT')} + ' FCFA'">0</h3>
+                <p class="text-muted mb-0">Montant payé</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list me-2"></i>Toutes les factures</span>
+            <span class="badge bg-secondary" th:text="${#lists.size(factures)} + ' facture(s)'">0</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>N° Facture</th>
+                        <th>Date</th>
+                        <th>Employé</th>
+                        <th>Formation</th>
+                        <th>Session</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="facture : ${factures}">
+                        <td><strong th:text="${facture.numeroFacture}">-</strong></td>
+                        <td th:text="${#temporals.format(facture.dateFacture,'dd/MM/yyyy')}">-</td>
+                        <td>
+                            <span th:if="${facture.inscription.demande != null}"
+                                  th:text="${facture.inscription.demande.employe.prenom} + ' ' + ${facture.inscription.demande.employe.nom}">-</span>
+                            <span th:if="${facture.inscription.demande == null and facture.inscription.employe != null}"
+                                  th:text="${facture.inscription.employe.prenom} + ' ' + ${facture.inscription.employe.nom}">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${facture.inscription.demande != null}"
+                                  th:text="${facture.inscription.demande.formation.nomFormation}">-</span>
+                            <span th:if="${facture.inscription.demande == null and facture.inscription.session != null}"
+                                  th:text="${facture.inscription.session.formation.nomFormation}">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${facture.inscription.session != null}"
+                                  th:text="${#temporals.format(facture.inscription.session.dateDebut,'dd/MM/yyyy')} + ' → ' + ${#temporals.format(facture.inscription.session.dateFin,'dd/MM/yyyy')}">-</span>
+                        </td>
+                        <td><strong th:text="${#numbers.formatDecimal(facture.montant,0,'COMMA',0,'POINT')} + ' FCFA'">-</strong></td>
+                        <td>
+                            <span th:if="${facture.payee}" class="badge-payee"><i class="fas fa-check me-1"></i>Payée</span>
+                            <span th:unless="${facture.payee}" class="badge-nonpayee"><i class="fas fa-hourglass-half me-1"></i>En attente</span>
+                        </td>
+                        <td>
+                            <!-- Marquer payée -->
+                            <form th:unless="${facture.payee}"
+                                  th:action="@{/responsable/factures/{id}/payer(id=${facture.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-success me-1" title="Marquer payée"
+                                        onclick="return confirm('Confirmer le paiement ?')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <!-- Annuler paiement -->
+                            <form th:if="${facture.payee}"
+                                  th:action="@{/responsable/factures/{id}/annuler-paiement(id=${facture.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-warning me-1" title="Annuler paiement"
+                                        onclick="return confirm('Annuler le paiement ?')">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </form>
+                            <!--voir -->
+                            <a th:href="@{/responsable/factures/{id}/voir(id=${facture.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1" title="Voir la facture" target="_blank">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <!-- Supprimer -->
+                            <form th:action="@{/responsable/factures/{id}/supprimer(id=${facture.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer"
+                                        onclick="return confirm('Supprimer définitivement cette facture ?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(factures)}">
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-file-invoice fa-2x mb-3 d-block"></i>
+                            Aucune facture. Elles seront générées automatiquement lors des acceptations de demandes.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

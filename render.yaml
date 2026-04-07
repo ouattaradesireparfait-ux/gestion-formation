@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: gestion-formation
+    runtime: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -Dspring.profiles.active=prod -jar target/gestion-formation-1.0.0.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gestion-formation-db
+          property: connectionString
+
+databases:
+  - name: gestion-formation-db
+    databaseName: gestion_formation
+    user: formation_user
+    plan: free

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes demandes - Espace Employé</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#667eea,#764ba2);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .card{border:none;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+        .card-header{background:white;border-bottom:1px solid #e0e4f0;padding:15px 20px;font-weight:600;border-radius:15px 15px 0 0!important;}
+        .page-title{margin-bottom:30px;border-left:5px solid #667eea;padding-left:20px;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/employe/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/employe/demandes">Mes demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/employe/catalogue">Catalogue</a></li>
+                <li class="nav-item"><a class="nav-link" href="/employe/mes-inscriptions">Mes inscriptions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Employé</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="padding:30px 20px;">
+    <div class="page-title"><h1>Mes demandes de formation</h1><p>Suivez l'état de vos demandes</p></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-list-alt me-2"></i>Liste de mes demandes</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr><th>N° Demande</th><th>Formation</th><th>Date</th><th>Statut</th><th>Session choisie</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="demande : ${demandes}">
+                        <td th:text="${demande.numeroDemande}">-</td>
+                        <td th:text="${demande.formation.nomFormation}">-</td>
+                        <td th:text="${#temporals.format(demande.dateDemande,'dd/MM/yyyy')}">-</td>
+                        <td>
+                            <span th:if="${demande.statut.name()=='EN_ATTENTE'}" class="badge bg-warning text-dark">En attente</span>
+                            <span th:if="${demande.statut.name()=='EN_INSTRUCTION'}" class="badge bg-info">En instruction</span>
+                            <span th:if="${demande.statut.name()=='ACCEPTEE'}" class="badge bg-success">Acceptée</span>
+                            <span th:if="${demande.statut.name()=='REFUSEE'}" class="badge bg-danger">Refusée</span>
+                            <span th:if="${demande.statut.name()=='ANNULEE'}" class="badge bg-secondary">Annulée</span>
+                            <span th:if="${demande.statut.name()=='VALIDEE'}" class="badge bg-primary">Validée ✓</span>
+                        </td>
+                        <td>
+                            <span th:if="${demande.sessionChoisie != null}"
+                                  th:text="${#temporals.format(demande.sessionChoisie.dateDebut,'dd/MM/yyyy')} + ' — ' + ${demande.sessionChoisie.lieu}">-</span>
+                            <span th:if="${demande.sessionChoisie == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <!-- Détails (toujours visible) -->
+                            <a th:href="@{/employe/demande/details/{id}(id=${demande.id})}"
+                               class="btn btn-sm btn-outline-primary me-1" title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </a>
+
+                            <!-- Annuler SEULEMENT si EN_ATTENTE -->
+                            <form th:if="${demande.statut.name()=='EN_ATTENTE'}"
+                                  th:action="@{/employe/demande/annuler/{id}(id=${demande.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger me-1"
+                                        onclick="return confirm('Annuler cette demande ?')"
+                                        title="Annuler la demande">
+                                    <i class="fas fa-times me-1"></i>Annuler
+                                </button>
+                            </form>
+
+                            <!-- Choisir session si ACCEPTEE et pas encore de session -->
+                            <a th:if="${demande.statut.name()=='ACCEPTEE' and demande.sessionChoisie==null}"
+                               th:href="@{/employe/choisir-session(demandeId=${demande.id})}"
+                               class="btn btn-sm btn-success"
+                               title="Choisir votre session de formation">
+                                <i class="fas fa-calendar-check me-1"></i>Choisir ma session
+                            </a>
+
+                            <!-- Supprimer si REFUSEE ou ANNULEE -->
+                            <form th:if="${demande.statut.name()=='REFUSEE' or demande.statut.name()=='ANNULEE'}"
+                                  th:action="@{/employe/demande/supprimer/{id}(id=${demande.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger me-1"
+                                        onclick="return confirm('Supprimer définitivement cette demande ?')"
+                                        title="Supprimer de l'historique">
+                                    <i class="fas fa-trash me-1"></i>Supprimer
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${demandes.isEmpty()}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            Aucune demande. <a href="/employe/nouvelle-demande">Faire une demande</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="mt-3">
+        <a href="/employe/nouvelle-demande" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Nouvelle demande</a>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

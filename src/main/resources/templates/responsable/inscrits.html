@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscrits à la session - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .card{border:none;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+        .card-header{background:white;border-bottom:1px solid #e0e4f0;padding:15px 20px;font-weight:600;border-radius:15px 15px 0 0!important;}
+        .page-title{margin-bottom:30px;border-left:5px solid #28a745;padding-left:20px;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="padding:30px 20px;">
+    <div class="page-title">
+        <h1>Inscrits à la session</h1>
+        <p th:if="${sess!=null}">
+            <strong th:text="${sess.formation.nomFormation}">-</strong> —
+            Du <span th:text="${#temporals.format(sess.dateDebut,'dd/MM/yyyy')}">-</span>
+            au <span th:text="${#temporals.format(sess.dateFin,'dd/MM/yyyy')}">-</span>
+            — <span th:text="${sess.lieu}">-</span>
+        </p>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-users me-2"></i>Inscrits
+            (<span th:text="${inscriptions.size()}">0</span> / <span th:text="${sess.placesMax}">0</span> places)
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr><th>#</th><th>Employé</th><th>Date inscription</th><th>Statut</th><th>Document transmis</th><th>Motif empêchement</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="insc, stat : ${inscriptions}">
+                        <td th:text="${stat.count}">1</td>
+                        <td>
+                            <span th:if="${insc.demande!=null}" th:text="${insc.demande.employe.prenom} + ' ' + ${insc.demande.employe.nom}">-</span>
+                            <span th:if="${insc.demande==null and insc.employe!=null}" th:text="${insc.employe.prenom} + ' ' + ${insc.employe.nom}">-</span>
+                            <span th:if="${insc.demande==null and insc.employe==null}" class="text-muted fst-italic">Inconnu</span>
+                        </td>
+                        <td th:text="${#temporals.format(insc.dateInscription,'dd/MM/yyyy')}">-</td>
+                        <td>
+                            <span th:if="${insc.statut.name()=='CONFIRMEE'}" class="badge bg-success">Confirmée</span>
+                            <span th:if="${insc.statut.name()=='ANNULEE'}" class="badge bg-secondary">Annulée</span>
+                            <span th:if="${insc.statut.name()=='EMPECHEMENT'}" class="badge bg-warning text-dark">Empêchement</span>
+                            <span th:if="${insc.statut.name()=='TERMINEE'}" class="badge bg-primary">Terminée</span>
+                        </td>
+                        <td>
+                            <span th:if="${insc.documentFinFormation!=null}" class="badge bg-info text-dark">
+                                <i class="fas fa-file me-1"></i>
+                                <span th:text="${insc.documentLu ? 'Lu' : 'Non lu'}">-</span>
+                            </span>
+                            <span th:if="${insc.documentFinFormation==null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${insc.motifEmpechement!=null}" th:text="${insc.motifEmpechement}" class="text-muted small fst-italic">-</span>
+                            <span th:if="${insc.motifEmpechement==null}" class="text-muted">—</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${inscriptions.isEmpty()}"><td colspan="6" class="text-center text-muted py-4">Aucun inscrit.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <a href="/responsable/sessions" class="btn btn-secondary mt-3"><i class="fas fa-arrow-left me-2"></i>Retour aux sessions</a>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

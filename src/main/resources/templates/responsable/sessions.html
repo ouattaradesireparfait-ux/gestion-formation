@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des sessions - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .card{border:none;border-radius:15px;box-shadow:0 5px 20px rgba(0,0,0,.05);}
+        .card-header{background:white;border-bottom:1px solid #e0e4f0;padding:15px 20px;font-weight:600;border-radius:15px 15px 0 0!important;}
+        .page-title{margin-bottom:30px;border-left:5px solid #28a745;padding-left:20px;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="padding:30px 20px;">
+    <div class="page-title"><h1>Gestion des sessions</h1><p>Créez et gérez les sessions de formation</p></div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="d-flex justify-content-end mb-3">
+        <a href="/responsable/sessions/nouvelle" class="btn btn-success"><i class="fas fa-plus me-2"></i>Nouvelle session</a>
+    </div>
+    <div class="card">
+        <div class="card-header"><i class="fas fa-calendar-alt me-2"></i>Toutes les sessions</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr><th>Formation</th><th>Dates</th><th>Lieu</th><th>Places</th><th>Statut</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sess : ${sessions}">
+                        <td th:text="${sess.formation.nomFormation}">-</td>
+                        <td th:text="${#temporals.format(sess.dateDebut,'dd/MM/yyyy')} + ' → ' + ${#temporals.format(sess.dateFin,'dd/MM/yyyy')}">-</td>
+                        <td th:text="${sess.lieu}">-</td>
+                        <td th:text="${sess.placesDisponibles} + '/' + ${sess.placesMax}">-</td>
+                        <td>
+                            <!-- Statut principal -->
+                            <span th:if="${sess.statut.name()=='CONFIRMEE' and sess.dateDebut.isAfter(#temporals.createNow().toLocalDate())}"
+                                  class="badge bg-success">Confirmée</span>
+                            <span th:if="${sess.statut.name()=='CONFIRMEE' and !sess.dateDebut.isAfter(#temporals.createNow().toLocalDate()) and sess.dateFin.isAfter(#temporals.createNow().toLocalDate())}"
+                                  class="badge bg-primary">En cours</span>
+                            <span th:if="${sess.statut.name()=='CONFIRMEE' and !sess.dateFin.isAfter(#temporals.createNow().toLocalDate())}"
+                                  class="badge bg-secondary">Terminée</span>
+                            <span th:if="${sess.statut.name()=='EN_ATTENTE'}" class="badge bg-warning text-dark">En attente</span>
+                            <span th:if="${sess.statut.name()=='ANNULEE'}" class="badge bg-danger">Annulée</span>
+                            <span th:if="${sess.statut.name()=='TERMINEE'}" class="badge bg-secondary">Terminée</span>
+                        </td>
+                        <td>
+                            <!-- Voir inscrits : toujours disponible sauf si annulée -->
+                            <a th:if="${sess.statut.name()!='ANNULEE'}"
+                               th:href="@{/responsable/sessions/{id}/inscrits(id=${sess.id})}"
+                               class="btn btn-sm btn-outline-info me-1" title="Voir les inscrits">
+                                <i class="fas fa-users"></i>
+                            </a>
+                            <!-- Modifier et Annuler : uniquement si la session n'a PAS encore débuté -->
+                            <th:block th:if="${sess.statut.name()!='ANNULEE' and sess.statut.name()!='TERMINEE' and sess.dateDebut.isAfter(#temporals.createNow().toLocalDate())}">
+                                <a th:href="@{/responsable/sessions/modifier/{id}(id=${sess.id})}"
+                                   class="btn btn-sm btn-outline-primary me-1" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form th:action="@{/responsable/sessions/annuler/{id}(id=${sess.id})}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            title="Annuler et supprimer cette session"
+                                            onclick="return confirm('Supprimer cette session ? Les inscriptions associées seront annulées.')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </th:block>
+                            <!-- Session déjà débutée : message informatif -->
+                            <span th:if="${sess.statut.name()!='ANNULEE' and !sess.dateDebut.isAfter(#temporals.createNow().toLocalDate())}"
+                                  class="text-muted small fst-italic ms-1">Session débutée</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${sessions.isEmpty()}">
+                        <td colspan="6" class="text-center text-muted py-4">Aucune session. <a href="/responsable/sessions/nouvelle">Créer une session</a></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

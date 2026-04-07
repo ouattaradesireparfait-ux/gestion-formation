@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue - Responsable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body{font-family:'Segoe UI',sans-serif;background:#f5f7fa;}
+        .navbar{background:linear-gradient(135deg,#28a745,#20c997);padding:15px 0;}
+        .navbar-brand,.nav-link{color:white!important;}
+        .user-menu{display:flex;align-items:center;gap:15px;color:white;}
+        .formation-card{background:white;border-radius:15px;padding:20px;margin-bottom:20px;border:1px solid #e0e4f0;transition:all .3s;}
+        .formation-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(40,167,69,.12);border-color:#28a745;}
+        .f-icon{width:55px;height:55px;background:linear-gradient(135deg,#28a745,#20c997);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:15px;}
+        .f-icon i{font-size:1.6em;color:white;}
+        .page-title{margin-bottom:30px;border-left:5px solid #28a745;padding-left:20px;display:flex;justify-content:space-between;align-items:center;}
+        .modal-content{border-radius:20px;}
+        footer{background:white;text-align:center;padding:20px;margin-top:50px;border-top:1px solid #e0e4f0;}
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fas fa-graduation-cap me-2"></i>Gestion Formation</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/responsable/dashboard">Accueil</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/demandes">Demandes</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/employes">Employés</a></li>
+                <li class="nav-item"><a class="nav-link" href="/responsable/sessions">Sessions</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/responsable/catalogue">Catalogue</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/responsable/documents">
+                        Documents
+                        <span th:if="${documentsNonLus != null and documentsNonLus > 0}" class="badge bg-danger ms-1" th:text="${documentsNonLus}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/profil">Mon profil</a></li>
+            </ul>
+            <div class="user-menu ms-4">
+                <i class="fas fa-user-circle"></i>
+                <span th:text="${username}">Responsable</span>
+                <a href="/logout" style="color:white;"><i class="fas fa-sign-out-alt"></i></a>
+            </div>
+        </div>
+    </div>
+</nav>
+<div class="container" style="padding:30px 20px;">
+    <div class="page-title">
+        <div><h1>Gestion du catalogue</h1><p>Ajoutez, modifiez ou supprimez les formations</p></div>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-plus-circle me-2"></i>Nouvelle formation
+        </button>
+    </div>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="row">
+        <div th:each="f : ${formations}" class="col-md-4">
+            <div class="formation-card">
+                <div class="f-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div class="fw-bold mb-1" th:text="${f.nomFormation}">-</div>
+                <div class="text-muted small mb-2" th:text="'Code : ' + ${f.codeFormation}">-</div>
+                <div class="text-muted small mb-3" th:text="${f.description}">-</div>
+                <div class="d-flex gap-3 text-muted small mb-3">
+                    <span><i class="far fa-clock me-1"></i><span th:text="${f.dureeHeures}">0</span>h</span>
+                    <span><i class="fas fa-level-up-alt me-1"></i><span th:text="${f.prerequisites ?: 'Tous niveaux'}">Niveau</span></span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-warning flex-fill"
+                            th:data-id="${f.id}" th:data-nom="${f.nomFormation}"
+                            th:data-desc="${f.description}" th:data-duree="${f.dureeHeures}"
+                            th:data-objectifs="${f.objectifs}" th:data-prerequis="${f.prerequisites}"
+                            data-bs-toggle="modal" data-bs-target="#editModal"
+                            onclick="remplirEdit(this)">
+                        <i class="fas fa-edit me-1"></i>Modifier
+                    </button>
+                    <form th:action="@{/responsable/catalogue/supprimer/{id}(id=${f.id})}" method="post">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cette formation ?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div th:if="${formations.isEmpty()}" class="col-12">
+            <div class="alert alert-info">Aucune formation dans le catalogue. Ajoutez-en une !</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Ajouter une formation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/responsable/catalogue/ajouter}" method="post">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8"><label class="form-label fw-bold">Nom *</label><input type="text" name="nomFormation" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label fw-bold">Durée (heures)</label><input type="number" name="dureeHeures" class="form-control" value="40"></div>
+                        <div class="col-12"><label class="form-label fw-bold">Description</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+                        <div class="col-md-6"><label class="form-label fw-bold">Objectifs</label><textarea name="objectifs" class="form-control" rows="2"></textarea></div>
+                        <div class="col-md-6"><label class="form-label fw-bold">Prérequis</label><textarea name="prerequisites" class="form-control" rows="2"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save me-2"></i>Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Modifier la formation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" method="post">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8"><label class="form-label fw-bold">Nom *</label><input type="text" name="nomFormation" id="editNom" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label fw-bold">Durée (heures)</label><input type="number" name="dureeHeures" id="editDuree" class="form-control"></div>
+                        <div class="col-12"><label class="form-label fw-bold">Description</label><textarea name="description" id="editDesc" class="form-control" rows="3"></textarea></div>
+                        <div class="col-md-6"><label class="form-label fw-bold">Objectifs</label><textarea name="objectifs" id="editObjectifs" class="form-control" rows="2"></textarea></div>
+                        <div class="col-md-6"><label class="form-label fw-bold">Prérequis</label><textarea name="prerequisites" id="editPrerequis" class="form-control" rows="2"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning"><i class="fas fa-save me-2"></i>Mettre à jour</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer><p>&copy; 2026 - Système de Gestion de Formation</p></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function remplirEdit(btn) {
+    const id = btn.dataset.id;
+    document.getElementById('editForm').action = '/responsable/catalogue/modifier/' + id;
+    document.getElementById('editNom').value = btn.dataset.nom || '';
+    document.getElementById('editDesc').value = btn.dataset.desc || '';
+    document.getElementById('editDuree').value = btn.dataset.duree || '';
+    document.getElementById('editObjectifs').value = btn.dataset.objectifs || '';
+    document.getElementById('editPrerequis').value = btn.dataset.prerequis || '';
+}
+</script>
+</body>
+</html>
